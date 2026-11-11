@@ -2,13 +2,12 @@
 name = "opencode"
 group = "org.vibevm.opencode"
 kind = "app"
-version = "0.0.1"
+version = "2.2.7"
 epoch = 1
-template = true
 format = "normal"
 authors = ["Oleg Chirukhin"]
 license = "MIT"
-description = "OpenCode {version}, the official standalone upstream build — one self-contained binary — as a portable Vibe application putting opencode on PATH"
+description = "OpenCode 2.2.7, the official standalone upstream build — one self-contained binary — as a portable Vibe application putting opencode on PATH"
 keywords = ["opencode", "agent", "coding-agent", "cli", "application"]
 homepage = "https://github.com/anomalyco/opencode"
 
@@ -19,75 +18,6 @@ requires_kinds = []
 [application]
 id = "opencode"
 keywords = ["opencode", "agent", "coding-agent"]
-
-# `[package].version` above is the template REVISION, not an OpenCode version,
-# and it is deliberately numbered below every version this template produces
-# (`0.0.1` < `2.2.0`): rendering a template fetched from a per-package Git
-# registry is not wired yet (PROP-075 `#P2-AS-BUILT` (8)), so a client that
-# resolves this repository by its tag list must prefer a concretely published
-# version over this manifest, which it would otherwise install with its
-# `{version}` placeholders unsubstituted. `README.md` says how the two tags
-# divide the work.
-#
-# The version domain: the `vX.Y.Z` releases of the upstream repository that
-# publish the twelve CLI archives, listed one row per version. The 2.x line
-# only — 1.x is a different major with its own asset set and is not packaged
-# here.
-#
-# `kind = "list"` and not `kind = "json"` over the GitHub releases API,
-# deliberately and for one measured reason: `[template.versions].url` must be a
-# credential-free HTTPS URL with **no query string** (the manifest validator
-# refuses `?`), so the only reachable document is
-# `https://api.github.com/repos/anomalyco/opencode/releases` with its default
-# page size of 30. That repository releases three things from one tag space
-# (`vX.Y.Z` for the CLI and the desktop app together, `process-daemon-vX.Y.Z`
-# for a separate daemon, and `pr-*` preview tags), and a selector cannot
-# filter: measured on 2026-11-11 the default page held 30 releases — 26
-# `vX.Y.Z`, of which only **8** were 2.x, the rest 1.18/1.19 — in 2.07 MB of
-# JSON per resolution, spanning 74 days. A JSON domain would therefore drop
-# each version — including a version pinned in a corporate drop — about two
-# months after its release, and would offer the 1.x line this package does not
-# cover. A listed domain keeps every version installable for good; the price is
-# one row per upstream release, and no digest is ever transcribed by hand
-# because they still come from upstream's own `SHA256SUMS`.
-#
-# Adding a version: append one row, run `vibe app versions
-# org.vibevm.opencode/opencode`, and bump `[package].version` (the template
-# revision). Rows are kept newest last.
-[template.versions]
-kind = "list"
-
-[[template.versions.item]]
-version = "2.2.0"
-
-[[template.versions.item]]
-version = "2.2.1"
-
-[[template.versions.item]]
-version = "2.2.2"
-
-[[template.versions.item]]
-version = "2.2.3"
-
-[[template.versions.item]]
-version = "2.2.4"
-
-[[template.versions.item]]
-version = "2.2.5"
-
-[[template.versions.item]]
-version = "2.2.6"
-
-[[template.versions.item]]
-version = "2.2.7"
-
-# One `SHA256SUMS` per release, in `sha256sum(1)` form, naming every archive of
-# that release — the CLI archives this package installs and the desktop
-# installers it does not. It carries no sizes, so no option declares `size` and
-# the step panel falls back to the server's `Content-Length`.
-[template.digests]
-kind = "sha256sums"
-url = "https://github.com/anomalyco/opencode/releases/download/v{version}/SHA256SUMS"
 
 # The twelve installer options are one per CLI archive of a release. The
 # `baseline` archives — upstream's builds for x86-64 CPUs without AVX2 — carry
@@ -107,7 +37,7 @@ url = "https://github.com/anomalyco/opencode/releases/download/v{version}/SHA256
 
 [[installer_options]]
 id = "linux-x64"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "linux"
 platform_name = "Linux (glibc)"
 arch = "x86_64"
@@ -115,11 +45,11 @@ arch_name = "Intel/AMD 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "tar_gz"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-linux-x64.tar.gz"
-sha256 = "{sha256:opencode-linux-x64.tar.gz}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-linux-x64.tar.gz"
+sha256 = "89a6cee227b54bc011179c528a5e63176032462b1a5e21723b616801cddc2ca7"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -136,7 +66,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "linux-arm64"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "linux"
 platform_name = "Linux (glibc)"
 arch = "aarch64"
@@ -144,11 +74,11 @@ arch_name = "ARM 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "tar_gz"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-linux-arm64.tar.gz"
-sha256 = "{sha256:opencode-linux-arm64.tar.gz}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-linux-arm64.tar.gz"
+sha256 = "c1682057f0815cb2abdd6e00305f1146ebaf1c167f0335cdb74ddc80008120e7"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -165,7 +95,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "linux-musl-x64"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "linux-musl"
 platform_name = "Linux (musl: Alpine and others)"
 arch = "x86_64"
@@ -173,11 +103,11 @@ arch_name = "Intel/AMD 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "tar_gz"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-linux-x64-musl.tar.gz"
-sha256 = "{sha256:opencode-linux-x64-musl.tar.gz}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-linux-x64-musl.tar.gz"
+sha256 = "c1801a36bf61e03eafac8d7f4521a200e4d3cd76cf43b36621cb78b460b851ee"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -194,7 +124,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "linux-musl-arm64"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "linux-musl"
 platform_name = "Linux (musl: Alpine and others)"
 arch = "aarch64"
@@ -202,11 +132,11 @@ arch_name = "ARM 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "tar_gz"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-linux-arm64-musl.tar.gz"
-sha256 = "{sha256:opencode-linux-arm64-musl.tar.gz}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-linux-arm64-musl.tar.gz"
+sha256 = "a03405f94ae02db7acb0870cf32030bab86460dc7faf524780e9cae305526b96"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -223,7 +153,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "linux-x64-baseline"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "linux-baseline"
 platform_name = "Linux (glibc, CPU without AVX2)"
 arch = "x86_64"
@@ -231,11 +161,11 @@ arch_name = "Intel/AMD 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "tar_gz"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-linux-x64-baseline.tar.gz"
-sha256 = "{sha256:opencode-linux-x64-baseline.tar.gz}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-linux-x64-baseline.tar.gz"
+sha256 = "89a6cee227b54bc011179c528a5e63176032462b1a5e21723b616801cddc2ca7"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -252,7 +182,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "linux-musl-x64-baseline"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "linux-musl-baseline"
 platform_name = "Linux (musl, CPU without AVX2)"
 arch = "x86_64"
@@ -260,11 +190,11 @@ arch_name = "Intel/AMD 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "tar_gz"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-linux-x64-baseline-musl.tar.gz"
-sha256 = "{sha256:opencode-linux-x64-baseline-musl.tar.gz}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-linux-x64-baseline-musl.tar.gz"
+sha256 = "c1801a36bf61e03eafac8d7f4521a200e4d3cd76cf43b36621cb78b460b851ee"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -281,7 +211,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "macos-x64"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "macos"
 platform_name = "macOS"
 arch = "x86_64"
@@ -289,11 +219,11 @@ arch_name = "Intel 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "zip"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-darwin-x64.zip"
-sha256 = "{sha256:opencode-darwin-x64.zip}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-darwin-x64.zip"
+sha256 = "3e4ea96ece041218cc74bc7c7d5cd202ff1f7983e32fc7ab6c58d532445e7961"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -310,7 +240,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "macos-arm64"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "macos"
 platform_name = "macOS"
 arch = "aarch64"
@@ -318,11 +248,11 @@ arch_name = "Apple silicon"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "zip"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-darwin-arm64.zip"
-sha256 = "{sha256:opencode-darwin-arm64.zip}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-darwin-arm64.zip"
+sha256 = "811c42be9cad489ea8c411ead49e06f691deee4957ba9a0a56a159a7d6c1abdc"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -339,7 +269,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "macos-x64-baseline"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "macos-baseline"
 platform_name = "macOS (Intel CPU without AVX2)"
 arch = "x86_64"
@@ -347,11 +277,11 @@ arch_name = "Intel 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "zip"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-darwin-x64-baseline.zip"
-sha256 = "{sha256:opencode-darwin-x64-baseline.zip}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-darwin-x64-baseline.zip"
+sha256 = "7830c9ce3945ad9fee792f603d4c9abcbb041b5cabafb51ce3c40da1dad5b435"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -368,7 +298,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "windows-x64"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "windows"
 platform_name = "Windows"
 arch = "x86_64"
@@ -376,11 +306,11 @@ arch_name = "Intel/AMD 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "zip"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-windows-x64.zip"
-sha256 = "{sha256:opencode-windows-x64.zip}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-windows-x64.zip"
+sha256 = "91398e0e2c2bc72f6c93dbdae426a0710884ed3277a08558200753c7a995daa8"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -397,7 +327,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "windows-arm64"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "windows"
 platform_name = "Windows"
 arch = "aarch64"
@@ -405,11 +335,11 @@ arch_name = "ARM 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "zip"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-windows-arm64.zip"
-sha256 = "{sha256:opencode-windows-arm64.zip}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-windows-arm64.zip"
+sha256 = "4b2b22b4da843d126182853847974e02d7729e51046b396352cfe651fafb08d6"
 
 [[installer_options.launchers]]
 id = "opencode"
@@ -426,7 +356,7 @@ launcher = "opencode"
 
 [[installer_options]]
 id = "windows-x64-baseline"
-name = "OpenCode {version}"
+name = "OpenCode 2.2.7"
 platform = "windows-baseline"
 platform_name = "Windows (CPU without AVX2)"
 arch = "x86_64"
@@ -434,11 +364,11 @@ arch_name = "Intel/AMD 64-bit"
 
 [[installer_options.steps]]
 id = "opencode"
-title = "Download and unpack the standalone OpenCode {version} binary"
+title = "Download and unpack the standalone OpenCode 2.2.7 binary"
 kind = "archive"
 format = "zip"
-source = "https://github.com/anomalyco/opencode/releases/download/v{version}/opencode-windows-x64-baseline.zip"
-sha256 = "{sha256:opencode-windows-x64-baseline.zip}"
+source = "https://github.com/anomalyco/opencode/releases/download/v2.2.7/opencode-windows-x64-baseline.zip"
+sha256 = "93323d0d6f72f9d1ba9f847e8002de71ace79bb5ea64f18d6b70bbbc30cc719e"
 
 [[installer_options.launchers]]
 id = "opencode"
