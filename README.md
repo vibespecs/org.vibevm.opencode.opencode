@@ -201,6 +201,49 @@ establishes, or `/etc/opencode/opencode.json`:
 { "update": "disable" }
 ```
 
+## The prompt bases, and why this package carries them
+
+`prompt-bases/<opencode-version>/` holds OpenCode's **own** system-prompt text,
+vendored verbatim from the upstream tag of that exact version, with a
+`PROVENANCE.toml` saying where every byte came from and what has been proved
+about it. That is unusual for a package whose job is to download a binary, so
+here is the whole reason.
+
+Vibe can put a project's boot lane — its standing instructions, composed from
+the project's own boot files — into the coding agent's **system prompt**, so
+the provider caches it once and every later session in that project reads it
+from the cache instead of re-reading files with tools
+([PROP-076](https://github.com/vibevm/vibevm)). For that to be safe, a harness
+needs an instruction slot that is **additive** (it adds to the harness's own
+prompt rather than replacing it), **file-based** (a ~300 KB lane cannot go on a
+command line), **per-launch** (it must not leak into other sessions), and
+**not inherited by subagents** (a bounded worker must not receive a central
+prefix). Claude Code and Codex each have one, so vibe passes them a flag and is
+done.
+
+OpenCode has no such slot. Its configuration `instructions` array is additive
+and file-based — and a `subagent` child session receives it, measured on 2.2.7:
+the child's request came back byte-identical to the primary's with the lane in
+it. Its only **subagent-safe** slot is an agent's `system`, and that one
+*replaces* OpenCode's base prompt instead of adding to it. So the only way to
+give an OpenCode session a boot lane without silently deleting the harness's
+own instructions is for vibe to supply **OpenCode's own base prompt for the
+exact installed version**, with the lane after it.
+
+That is what these files are for, and it is why they are versioned data with
+provenance rather than text in vibe's source: a base from the wrong version, or
+for the wrong model family, produces a session whose harness instructions are
+not the ones OpenCode wrote, with no error anywhere — which is worse than
+delivering no lane at all. Carrying them **in this package** means a new
+OpenCode version ships its bases with the package and needs no vibe release,
+and a closed network receives them through the same mirror or drop that already
+carries the package.
+
+Design authority: `PROP-076#SYS-SUPPLIED-BASE` and
+`campaigns/sys-prompt-2026-11/HARNESS-DELIVERY.md` §5 ("OpenCode, second
+look") in the vibevm repository. The runbook for the next version is under
+*Maintaining* below.
+
 ## Closed networks
 
 The same package, unedited, installs where `github.com` cannot be reached. The
@@ -359,12 +402,148 @@ are the two `-musl` ones. That is upstream's business; each option names its
 own asset and takes that asset's digest, so nothing here depends on their
 being different.
 
-## License
+### Adding prompt bases for a new OpenCode version
 
-This package — its manifest and its documents — is UPL-1.0; see `LICENSE.md`.
+Written for whoever — person or agent — opens this repository next. The
+previous set is the worked example: read `prompt-bases/2.2.7/PROVENANCE.toml`
+first, because every field below exists in it already.
 
-OpenCode itself is **not**: it is distributed under the **MIT License**.
-`[package].license` in the manifest names the license of what an installation
-puts on the machine, `MIT`. The standalone archive carries the compiled binary
-alone, with no license file beside it; upstream's text is in the repository the
-`homepage` names.
+**1. Where to look.** Upstream is `https://github.com/anomalyco/opencode`
+(`sst/opencode` 301-redirects there). Find the tag matching the version you are
+packaging — `v2.2.8` for OpenCode 2.2.8 — and record its **commit**, not just
+the tag, since a tag can move. Read the commit's source tarball; do **not**
+read the published npm artifact or the compiled binary, which inline these
+files through a bundler.
+
+**2. Fetch the seven base files**, at these paths, byte-exact — every blank
+line, every non-ASCII character, the trailing newline:
+
+```text
+packages/core/src/session/runner/prompt/system.txt      the generic base
+packages/core/src/plugin/system-prompt/anthropic.txt    appended for claude*
+packages/core/src/plugin/system-prompt/gpt.txt          replaces, for gpt*
+packages/core/src/plugin/system-prompt/gpt-astra.txt    replaces, for gpt*astra*
+packages/core/src/plugin/system-prompt/kimi.txt         replaces, for kimi*
+packages/core/src/plugin/system-prompt/meta.txt         replaces, for muse*
+packages/core/src/plugin/system-prompt/trinity.txt      replaces, for trinity*
+```
+
+Record each one's byte length, line count and sha256 and **verify what you
+wrote to disk against them**. Transcription through any chat or tool is where
+bytes get eaten: in 2.2.7 the hazards were a double blank line in
+`gpt-astra.txt`, six non-ASCII codepoints across `gpt-astra.txt` and
+`kimi.txt`, and three lines consisting of a single `>` in `kimi.txt`.
+
+**3. Carry the licence.** Fetch the tag's root `LICENSE` byte-exact into
+`prompt-bases/<version>/LICENSE` and record its digest in `PROVENANCE.toml`
+under `[upstream.license]`. It lives **inside the version directory**, not
+beside it, so each set is self-contained: one directory you can copy, audit or
+drop carries both the bytes and the licence that governs them, and a version
+whose upstream licence changes records its own. See *Licences* below.
+
+**4. Record the assembly files and what each decides.** These are **drift
+tripwires**: `PROVENANCE.toml` carries a sha256 of each, and the sync tool
+refuses to verify a version where any of them changed. The ones that decide the
+most:
+
+| File | What it decides |
+| --- | --- |
+| `packages/core/src/plugin/optimize.ts` | the model→base selection table, each family's append/override mode, and the bail-out that leaves an agent's own `system` untouched |
+| `packages/core/src/session/system-prompt.ts` | the render rule: the `${OPENCODE_TOOL_GUIDANCE}` token, its three gate tool names (`shell`, `write`, `edit`), the bullet strings and their order |
+| `packages/core/src/session/model-request.ts` | the system-part array, and that an agent's `system` is used **raw** rather than rendered |
+| `packages/core/src/config/variable.ts` | `{file:}` substitution — including the whitespace **trim** the lane hand-over depends on |
+| `packages/core/src/config.ts` | where substitution is applied, including to `OPENCODE_CONFIG_CONTENT` |
+| `packages/core/src/config/plugin/instruction.ts` | the `AGENTS.md` walk and the ordering of config `instructions` |
+| `packages/core/src/session/context.ts` | the order of instruction sources inside the joined part |
+| `packages/core/src/instructions/builtins.ts` | the date and `<env>` block — i.e. where the per-day text sits relative to the lane |
+| `packages/core/src/tool/plugin/subagent.ts` | how a child session is built, and therefore worker exclusion |
+| `packages/core/src/plugin/identity.ts`, `tool/plugin/opencode.ts`, `plugin/internal.ts`, `plugin/hooks.ts` | the other system parts and the order the hooks add them in |
+
+The full list — 35 paths, each with its `decides` line — is in
+`prompt-bases/2.2.7/PROVENANCE.toml`. Copy it forward and re-digest.
+
+**5. Run the sync tool** (in the vibevm repository):
+
+```text
+cargo run -p xtask -- opencode-bases --version 2.2.8
+```
+
+Its two outcomes mean different things:
+
+- **fingerprints unchanged** → it fetches the seven files, writes the
+  directory, runs the capture proof against the installed 2.2.8 binary, and
+  sets `verified = true` with the proof's id and date. That is the only thing
+  that may set `verified`.
+- **fingerprints changed** → it **refuses** to verify and prints a diff of the
+  changed assembly files. Read the diff and answer one question: does the
+  change affect the composition this provenance describes? If it only adds a
+  rule the recorded data can express (another `[[select]]` row, another
+  `[[render.bullet]]`), extend `PROVENANCE.toml` and re-run. If it needs a rule
+  the interpreter cannot express, **stop**: extend the interpreter in vibe
+  first, with its own spec amendment. Never hand-edit `verified = true` — a
+  guessed base is the failure this whole mechanism exists to prevent.
+
+**6. The six verification conditions**, if you run them by hand. The scripts
+live in the vibevm repository under `campaigns/sys-prompt-2026-11/live/`:
+`make-sample.sh` builds the sample project, `opencode-capture.sh` captures a
+plain and a carrier run, and `opencode-subagent-capture.sh` with
+`fake-provider-subagent.py` drives a real child session offline so worker
+exclusion can be measured rather than argued. The conditions are listed in
+`PROP-076#SYS-SUPPLIED-BASE`: the reproduced base equal to the installed
+program's own; one contiguous insertion and nothing else changed; the inserted
+bytes equal to the lane under the named transformation only; the seam shown
+both ways; prefix stability across two launches; a child carrying the lane zero
+times; and one live check that an instruction existing **only** in the base is
+still obeyed. Live checks use the local model and the small sample — a 202 KB
+lane is proved offline, where it costs nothing.
+
+**7. Then the ordinary release steps** of this section: the
+`[[template.versions.item]]` row, `vibe app versions`, the template revision
+bump, the rendered concrete manifest on `release/<version>`, the tag, and the
+reindex. A prompt-base directory is part of the template tree, so it travels
+with both tags.
+
+**8. Refresh the mirror and the drop.** The bases are ordinary files in the
+package tree, so a `vibe registry mirror` run that copies the package copies
+them too — nothing new is needed in `mirror.toml`. The **drop** needs one
+thing the archives do not provide: upstream's standalone archive holds the
+compiled binary alone with no licence file beside it, so the drop should carry
+`LICENSE` next to the archives for the version it pins. `prompt-bases/<version>/LICENSE`
+in this repository is the byte-exact copy to use.
+
+## Licences
+
+Three layers, and they are not the same licence. Saying so once here is cheaper
+than a reader guessing.
+
+**1. The packaging — UPL-1.0.** This repository's own work: `vibe.toml`, the
+documents, the boot snippet, and the provenance records
+(`prompt-bases/*/PROVENANCE.toml`). See `LICENSE.md`. `[package].license` in
+the manifest is deliberately **not** this: it names the licence of what an
+installation puts on the machine.
+
+**2. The OpenCode binaries — MIT, upstream's, and this repository never
+redistributes them.** Each installer option names an upstream URL and a SHA-256
+from that release's own `SHA256SUMS`; the bytes travel from upstream to the
+machine, and `[package].license = "MIT"` records what they are. The standalone
+archive carries the compiled binary **alone, with no licence file beside it**,
+so a corporate drop — which *does* redistribute the archives — should carry
+upstream's `LICENSE` next to them; `prompt-bases/<version>/LICENSE` here is the
+byte-exact copy for that purpose.
+
+**3. The vendored prompt-base text — MIT, `Copyright (c) 2025 opencode`.**
+`prompt-bases/<version>/*.txt` is OpenCode's own system-prompt text, copied
+verbatim from the upstream tag, and it is the one place where this repository
+redistributes someone else's work. Upstream's licence travels with it, byte-exact,
+at `prompt-bases/<version>/LICENSE`, which is what MIT asks for: "The above
+copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software." The upstream path, commit and digest of
+every file, and of the licence itself, are recorded in that version's
+`PROVENANCE.toml`. There is no `SPDX-License-Identifier` string in upstream's
+licence file, no per-file header on the prompt files, and no `NOTICE` governing
+them.
+
+Any other harness package that comes to carry upstream prompt text follows this
+same pattern — the licence of the text it vendors, byte-exact, inside the
+version directory, with its digest in the provenance record. For Qwen Code that
+licence is Apache-2.0, which also means carrying any `NOTICE` upstream ships.

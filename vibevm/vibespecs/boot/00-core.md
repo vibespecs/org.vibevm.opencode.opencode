@@ -91,5 +91,32 @@ and first a check that the release actually publishes all twelve CLI archives
 and a `SHA256SUMS` naming them, because a listed version that cannot render is
 a refusal at install time.
 
-Upstream is MIT; this package's own files are UPL-1.0. Both are stated in
-`README.md` and must stay stated.
+**This package also carries OpenCode's own system-prompt text**, vendored
+verbatim per version under `prompt-bases/<opencode-version>/` with a
+`PROVENANCE.toml` beside it. That is not decoration: OpenCode's only
+subagent-safe instruction slot — an agent's `system` — *replaces* its base
+prompt, so vibe must supply OpenCode's own base for the exact installed version
+to deliver a project's boot lane without deleting the harness's own
+instructions. A base from the wrong version or the wrong model family produces
+a session whose instructions are not the ones OpenCode wrote, with no error
+anywhere, which is why every byte has a recorded origin and a digest and why
+`verified` is earned by a measurement against the installed program rather than
+by a checksum. Read `prompt-bases/2.2.7/PROVENANCE.toml` before touching any of
+it; design authority is `PROP-076#SYS-SUPPLIED-BASE` and
+`campaigns/sys-prompt-2026-11/HARNESS-DELIVERY.md` §5 in the vibevm
+repository.
+
+**Adding a new OpenCode version therefore has a second half**, and
+`README.md`'s *Maintaining → Adding prompt bases for a new OpenCode version*
+is the runbook: which upstream files to fetch, how to verify what you wrote to
+disk, the assembly files whose fingerprints are recorded and what each decides,
+the sync tool and what its two outcomes mean, the six verification conditions
+and the scripts that run them, and the licence step. **Never hand-edit
+`verified = true`**: only the proof may set it.
+
+Three licences live here and they are not the same one. This package's own
+files are UPL-1.0 (`LICENSE.md`); the OpenCode binaries an installation
+downloads are MIT and are never redistributed by this repository; the vendored
+prompt text is MIT, `Copyright (c) 2025 opencode`, and carries upstream's
+licence byte-exact at `prompt-bases/<version>/LICENSE`. `README.md`'s
+*Licences* section states the structure and must stay stated.
