@@ -114,6 +114,18 @@ the sync tool and what its two outcomes mean, the six verification conditions
 and the scripts that run them, and the licence step. **Never hand-edit
 `verified = true`**: only the proof may set it.
 
+The 2.2.7 set **is** verified — proof
+`opencode-whole-request-0ca944df359f9d68`, 2026-11-11 — so
+`[system_prompt.harness.opencode] delivery` defaults to `launch`, and the
+carrier this package's data describes is the one vibe actually hands over: one
+per-launch configuration layer in `OPENCODE_CONFIG_CONTENT` declaring the
+primary agent `vibe`, selected by the document's own `default_agent`, with
+`--standalone`. A machine with no verified set for its installed OpenCode
+soft-launches instead, which is the classic boot behind one loud warning. **A
+concrete tag is therefore cut only after its set is verified**: a published
+tree whose `verified` still says `false` is a version whose lane cannot be
+delivered.
+
 Three licences live here and they are not the same one. This package's own
 files are UPL-1.0 (`LICENSE.md`); the OpenCode binaries an installation
 downloads are MIT and are never redistributed by this repository; the vendored

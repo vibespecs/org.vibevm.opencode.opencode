@@ -239,10 +239,25 @@ OpenCode version ships its bases with the package and needs no vibe release,
 and a closed network receives them through the same mirror or drop that already
 carries the package.
 
+**2.2.7's set is verified**, and here is exactly what that means: proof
+`opencode-whole-request-0ca944df359f9d68`, 2026-11-11. Measured offline
+against the installed 2.2.7 binary on a 204,845-byte lane — the composed base
+is 1,470 bytes and the plain run's first 1,470 bytes are byte-identical to it;
+the carrier request satisfies `carried[:1472] + carried[1472 + 204845:] ==
+plain` exactly, so one insertion and nothing else changed; the inserted window
+is the lane file **byte for byte**, because `{file:}` trims its one trailing
+newline and OpenCode's own part join restores one; two consecutive launches are
+byte-identical throughout; and a real `subagent` child carries the lane zero
+times and is byte-identical to its own plain counterpart. Live on a local
+model, the one condition a byte diff cannot make: the delivered tail marker
+quoted, no boot file read, and an instruction existing only in OpenCode's own
+base still obeyed. So `[system_prompt.harness.opencode] delivery` defaults to
+`launch`, and a machine with no verified set soft-launches instead.
+
 Design authority: `PROP-076#SYS-SUPPLIED-BASE` and
 `campaigns/sys-prompt-2026-11/HARNESS-DELIVERY.md` §5 ("OpenCode, second
-look") in the vibevm repository. The runbook for the next version is under
-*Maintaining* below.
+look" and "OpenCode, shipped") in the vibevm repository. The runbook for the
+next version is under *Maintaining* below.
 
 ## Closed networks
 
@@ -379,7 +394,11 @@ Then, in order:
    bases from the installed version's own package tree and the public path
    resolves the concrete tag: a concrete tag without them is a version whose
    lane cannot be delivered. (`v2.2.7` was re-cut on 2026-11-11 for exactly
-   this reason, the day it was first published and before it had users.)
+   this reason, the day it was first published and before it had users — and
+   **again later the same day**, when its set earned `verified = true`: that
+   flag is part of the published tree, and a concrete tag whose set still says
+   `false` is a version whose lane soft-launches. Template revision `0.0.3`
+   carries the same change.)
 4. Bump `[package].version` (the template revision) and tag it.
 5. Render the concrete manifest for the new version, commit it on
    `release/2.2.8`, tag `v2.2.8`, and reindex.
@@ -469,18 +488,35 @@ most:
 The full list — 35 paths, each with its `decides` line — is in
 `prompt-bases/2.2.7/PROVENANCE.toml`. Copy it forward and re-digest.
 
-**5. Run the sync tool** (in the vibevm repository):
+**5. Run the sync tool** (in the vibevm repository, from its root):
 
 ```text
-cargo run -p xtask -- opencode-bases --version 2.2.8
+# the sample the proof runs in, built once, padded to a real lane size
+campaigns/sys-prompt-2026-11/live/make-sample.sh /tmp/sample 202349
+
+cargo run -p xtask -- opencode-bases \
+  --version 2.2.8 \
+  --package <this checkout> \
+  --sample /tmp/sample \
+  --out /tmp/prove-2.2.8
 ```
+
+Add `--prove-only` to re-prove a set that is already in the package without
+fetching anything; `--tag` when the upstream tag is not `v<version>`; `--from`
+to carry the description forward from a set other than the newest. The
+installed binary's `--version` must be the version under test — a proof
+against another build is a verdict about something nobody asked about, and the
+tool refuses it.
 
 Its two outcomes mean different things:
 
 - **fingerprints unchanged** → it fetches the seven files, writes the
-  directory, runs the capture proof against the installed 2.2.8 binary, and
-  sets `verified = true` with the proof's id and date. That is the only thing
-  that may set `verified`.
+  directory, runs the whole-request proof against the installed 2.2.8 binary,
+  and sets `verified = true` with the proof's id and date. That is the only
+  thing that may set `verified`. It composes the base through the **same**
+  interpreter a launch reads, by a door that skips only the `verified` check,
+  because a sync tool with a composition of its own would prove its own bytes
+  rather than vibe's.
 - **fingerprints changed** → it **refuses** to verify and prints a diff of the
   changed assembly files. Read the diff and answer one question: does the
   change affect the composition this provenance describes? If it only adds a
@@ -491,18 +527,28 @@ Its two outcomes mean different things:
   guessed base is the failure this whole mechanism exists to prevent.
 
 **6. The six verification conditions**, if you run them by hand. The scripts
-live in the vibevm repository under `campaigns/sys-prompt-2026-11/live/`:
-`make-sample.sh` builds the sample project, `opencode-capture.sh` captures a
-plain and a carrier run, and `opencode-subagent-capture.sh` with
-`fake-provider-subagent.py` drives a real child session offline so worker
-exclusion can be measured rather than argued. The conditions are listed in
-`PROP-076#SYS-SUPPLIED-BASE`: the reproduced base equal to the installed
-program's own; one contiguous insertion and nothing else changed; the inserted
-bytes equal to the lane under the named transformation only; the seam shown
-both ways; prefix stability across two launches; a child carrying the lane zero
-times; and one live check that an instruction existing **only** in the base is
-still obeyed. Live checks use the local model and the small sample — a 202 KB
-lane is proved offline, where it costs nothing.
+live in the vibevm repository under `campaigns/sys-prompt-2026-11/live/`.
+`make-sample.sh` builds the sample project. `opencode-prove.sh` is the whole
+proof of conditions (0) and (i)–(v): five legs against one loopback recorder —
+a plain control, the carrier launch, that launch again, and a real `subagent`
+child with the carrier and without it — judged by `opencode-prove.py`, whose
+last line is a verdict and whose exit status is what the sync tool reads. It
+takes the carrier either from a file the sync tool wrote or, for a set that is
+already verified, from `vibe prompt flags --harness opencode --json` with
+`--from-vibe`, which closes the loop: the bytes the proof measured are the
+bytes the launcher emits. `opencode-live-check.sh` is condition **(vi)**, the
+one a byte diff cannot make — it asks one live session to quote the delivered
+tail marker, to say which files it read with a tool, and to state a rule that
+exists **only** in OpenCode's own base text (the edit tool's
+`oldString`-occurs-once rule). The older `opencode-capture.sh` and
+`opencode-subagent-capture.sh` remain as the narrower measurements they were.
+
+Live checks use the **local** model and the **small** sample; a 202 KB lane is
+proved offline, where it costs nothing. One scope note worth carrying forward:
+the offline proof runs under the recorder's own model, which matches no
+selection row, so what it proves about the base is the **default** base. The
+per-family files are held by their digests and by the recorded table's own
+`file:line` provenance, not by a capture.
 
 **7. Then the ordinary release steps** of this section: the
 `[[template.versions.item]]` row, `vibe app versions`, the template revision
