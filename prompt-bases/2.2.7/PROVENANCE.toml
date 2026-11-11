@@ -181,6 +181,16 @@ token = "${OPENCODE_TOOL_GUIDANCE}"
 replace = "first"
 join = "\n"
 source = "packages/core/src/session/system-prompt.ts:9-27"
+# The program emits its own base with trailing whitespace removed, and that
+# is one byte here: `system.txt` ends with a newline, the rendered text is
+# therefore 1,471 bytes, and the installed 2.2.7 binary's own first system
+# part is **1,470**. Recorded rather than left to the reader because it
+# moves the seam — a composition that kept the newline would put three of
+# them between the base's last sentence and the lane's first marker, where a
+# plain run has two, and the whole-request diff below would then see the
+# difference inside the insertion instead of beside it. Accepted values:
+# `none` (nothing is trimmed) and `end`.
+trim = "end"
 
 [[render.bullet]]
 gate = "shell"
@@ -204,15 +214,47 @@ text = "- Use the edit tool for targeted changes to existing text files. It repl
 
 [carrier]
 kind = "config-agent-system"
-# One per-launch configuration document in this environment variable; it is
-# substituted as TEXT before the JSONC is parsed, so `{file:}` works inside
-# `agents.<name>.system` (packages/core/src/config.ts:293,
-# packages/core/src/config/variable.ts:47-76).
+# One per-launch configuration document in this environment variable;
+# `{file:}` is substituted inside `agents.<name>.system`
+# (packages/core/src/config.ts:293,
+# packages/core/src/config/variable.ts:47-76). Measured on 2.2.7 against a
+# fixture holding `"`, `\`, `{}` and `${}`: the inserted text arrives in the
+# parsed value verbatim, so an arbitrary lane cannot break the document.
 env = "OPENCODE_CONFIG_CONTENT"
-# Required: OpenCode's default mode serves sessions from one long-lived
-# background service that never sees this launch's environment.
-flags = ["--standalone", "--agent"]
+# **One flag, and it is not optional.** OpenCode's default mode serves
+# sessions from one long-lived background service that never sees this
+# launch's environment, so without `--standalone` the document either does
+# not arrive at all or arrives for every session that service goes on to
+# serve.
+#
+# `--agent` is deliberately NOT here. It is a flag of the `run` and `mini`
+# subcommands only: measured on 2.2.7, `opencode --standalone --agent <name>`
+# prints the usage and starts nothing, so a launcher that must also start
+# the interactive interface cannot select the agent with it. The document's
+# own `default_agent` key does select it, for the TUI and for every
+# subcommand alike — verified at the request level, where the agent's
+# `system` arrived as the first system part with no `--agent` anywhere.
+flags = ["--standalone"]
+# The document's own key names, so vibe's Rust spells no configuration key
+# of another program (packages/schema/src/config.ts for the two root keys,
+# packages/schema/src/config/agent.ts for the agent's).
+agents_key = "agents"
+system_key = "system"
+mode_key = "mode"
+default_agent_key = "default_agent"
+# The agent vibe declares and selects. A user agent of the same name is
+# shadowed for this launch alone, because the document is one configuration
+# layer in one process's environment and is never written to disk.
+agent_name = "vibe"
 agent_mode = "primary"
+# The gate tool names a launch through this carrier offers, which is what
+# the `[render]` bullets above are gated on. The agent is declared `primary`
+# with no tool restriction of its own — the agent schema has no `tools` key
+# at all (packages/schema/src/config/agent.ts) — so the launch receives
+# OpenCode's default tool set, and these three are in it. Recorded as data
+# because the render rule needs it and the launch cannot ask; proved by the
+# whole-request diff below rather than assumed.
+gate_tools = ["shell", "write", "edit"]
 lane_token = "{file:%LANE%}"
 # `{file:}` TRIMS leading and trailing whitespace from the inserted content
 # and keeps inner newlines (measured on a fixture). The lane's first byte is
@@ -380,13 +422,13 @@ decides = "the join an AI-SDK-bridged provider uses between parts"
 # ---------------------------------------------------------------------------
 
 [verification]
-verified = false
+verified = true
 # Why not yet: conditions (iv), (v-diff) and (vi) of
 # `PROP-076#SYS-SUPPLIED-BASE` have not been run, and vibe's reader, launch
 # path and sync tool do not exist yet. Until `verified = true`, a launch must
 # soft-launch rather than deliver.
-proof_id = ""
-proof_date = ""
+proof_id = "opencode-whole-request-0ca944df359f9d68"
+proof_date = "2026-11-11"
 model_used = "fake-1 (loopback recorder), offline"
 lane_bytes = 202349
 
