@@ -373,8 +373,15 @@ Then, in order:
    naming them — `gh release view v2.2.8 -R anomalyco/opencode --json assets`.
 2. `vibe app versions org.vibevm.opencode/opencode --registry <dir>` — the new
    version must appear and render.
-3. Bump `[package].version` (the template revision) and tag it.
-4. Render the concrete manifest for the new version, commit it on
+3. **Put the version's prompt-base set in place first** — see *Adding prompt
+   bases for a new OpenCode version* below. A concrete tag is cut only after
+   its `prompt-bases/<version>/` directory exists, because vibe reads the
+   bases from the installed version's own package tree and the public path
+   resolves the concrete tag: a concrete tag without them is a version whose
+   lane cannot be delivered. (`v2.2.7` was re-cut on 2026-11-11 for exactly
+   this reason, the day it was first published and before it had users.)
+4. Bump `[package].version` (the template revision) and tag it.
+5. Render the concrete manifest for the new version, commit it on
    `release/2.2.8`, tag `v2.2.8`, and reindex.
 
 What has to be checked when upstream changes *shape* rather than merely

@@ -2,7 +2,7 @@
 name = "opencode"
 group = "org.vibevm.opencode"
 kind = "app"
-version = "0.0.1"
+version = "0.0.2"
 epoch = 1
 template = true
 format = "normal"
