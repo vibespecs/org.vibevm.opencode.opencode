@@ -2,7 +2,7 @@
 name = "opencode"
 group = "org.vibevm.opencode"
 kind = "app"
-version = "0.0.3"
+version = "0.0.4"
 epoch = 1
 template = true
 format = "normal"
@@ -80,6 +80,9 @@ version = "2.2.6"
 
 [[template.versions.item]]
 version = "2.2.7"
+
+[[template.versions.item]]
+version = "2.4.2"
 
 # One `SHA256SUMS` per release, in `sha256sum(1)` form, naming every archive of
 # that release — the CLI archives this package installs and the desktop

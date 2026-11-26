@@ -1,0 +1,499 @@
+# Where OpenCode 2.2.7's own system-prompt bases came from, how they compose,
+# and what has actually been proved about them.
+#
+# This file is DATA, read by a generic interpreter in vibe. No prompt text, no
+# token spelling, no bullet string and no model-matching rule may be a literal
+# in vibe's Rust: a version whose composition needs a rule the interpreter
+# cannot express is REFUSED, never approximated, and the launch then falls back
+# to the soft launch of `PROP-076#SYS-SOFT-LAUNCH`.
+#
+# Why this exists at all: vibe delivers a project's boot lane in the agent's
+# own system prompt, and OpenCode's only subagent-safe slot — an agent's
+# `system` — *replaces* the base prompt rather than adding to it. So vibe must
+# supply OpenCode's own base, for exactly the installed version, with the lane
+# after it. See `PROP-076#SYS-SUPPLIED-BASE` and
+# `campaigns/sys-prompt-2026-11/HARNESS-DELIVERY.md` §5 ("OpenCode, second
+# look") in the vibevm repository, and the "Maintaining" section of this
+# package's README for the runbook that produced this directory.
+
+schema = 1
+harness = "opencode"
+harness_version = "2.4.2"
+
+[upstream]
+repository = "https://github.com/anomalyco/opencode"
+# `github.com/sst/opencode` 301-redirects here.
+tag = "v2.4.2"
+commit = "fc31a485317970bcf6be7b431a9830aaef875731"
+read_from = "raw files addressed by exact upstream commit"
+read_on = "2026-11-27"
+
+# The licence that governs every byte in this directory except this file.
+# Carried verbatim beside the text it governs, which is what MIT asks for:
+# "The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software."
+[upstream.license]
+spdx = "MIT"
+copyright = "Copyright (c) 2025 opencode"
+upstream_path = "LICENSE"
+file = "LICENSE"
+bytes = 1065
+sha256 = "625f0f619133f89bbbb2abe37369613dfa1885eba1e50d02170deb62bb42cb6b"
+# No `SPDX-License-Identifier` string anywhere in the file; no per-file licence
+# header on any base file; `packages/core/` carries no LICENSE or NOTICE of its
+# own and is covered by this root MIT through `packages/core/package.json`.
+notice = "none"
+
+# ---------------------------------------------------------------------------
+# The base files, at their upstream paths. `file` is the name in this
+# directory; the digests are of the bytes as they exist in the commit above,
+# and every one was re-verified against the file written here.
+# ---------------------------------------------------------------------------
+
+[[base]]
+id = "generic"
+file = "system.txt"
+upstream_path = "packages/core/src/session/runner/prompt/system.txt"
+bytes = 1035
+sha256 = "ea6fc452d3c2e499b357aa6dac18b3db050a8c5336c01922bd7036f582f7134c"
+has_tool_guidance_token = true
+# The default base, used for every model no `[[select]]` row matches.
+default = true
+
+[[base]]
+id = "anthropic"
+file = "anthropic.txt"
+upstream_path = "packages/core/src/plugin/system-prompt/anthropic.txt"
+bytes = 300
+sha256 = "0ae1276d0af9abb456a0f96409b32beb1b081227db7a3d0f236f919e4fd29bac"
+has_tool_guidance_token = false
+
+[[base]]
+id = "gpt"
+file = "gpt.txt"
+upstream_path = "packages/core/src/plugin/system-prompt/gpt.txt"
+bytes = 2851
+sha256 = "9e5d6551682322b98017a9b069b243cf37d5db4c5fc5be7a874d6f4f36ba7528"
+has_tool_guidance_token = true
+
+[[base]]
+id = "gpt-astra"
+file = "gpt-astra.txt"
+upstream_path = "packages/core/src/plugin/system-prompt/gpt-astra.txt"
+bytes = 4104
+sha256 = "5322d77edfccb18ee02bd4b81ecd8c6e9d8c2ebc42ee976f77f4d6cfb7000f58"
+has_tool_guidance_token = true
+
+[[base]]
+id = "kimi"
+file = "kimi.txt"
+upstream_path = "packages/core/src/plugin/system-prompt/kimi.txt"
+bytes = 8978
+sha256 = "15ef7ade0ae745a69ebe9c1862c5095b8784e51726dc93f8345f6aba56b21191"
+has_tool_guidance_token = false
+
+[[base]]
+id = "meta"
+file = "meta.txt"
+upstream_path = "packages/core/src/plugin/system-prompt/meta.txt"
+bytes = 8132
+sha256 = "c415d37307c446f486fd8de7289158387344d42e2158e28aa5d6d31be7690c15"
+has_tool_guidance_token = false
+
+[[base]]
+id = "trinity"
+file = "trinity.txt"
+upstream_path = "packages/core/src/plugin/system-prompt/trinity.txt"
+bytes = 7961
+sha256 = "01532f3e128241303602c7a3b1d5830b07e18daaf46bb71e5fb952c5a6cd7e53"
+has_tool_guidance_token = false
+
+# ---------------------------------------------------------------------------
+# Selection: which base a model gets. Matching is a SUBSTRING test against the
+# model id lower-cased — not the provider id, not the model's family — and the
+# rows are tried in the order given, which is upstream's registration order.
+# The first row whose `substring` is present wins; `mode = "append"` keeps the
+# default base and appends this one behind a blank line, `mode = "override"`
+# replaces it. A model matching no row takes the `default = true` base.
+# Recorded from: packages/core/src/plugin/optimize.ts:16-62 (file sha256
+# b86696d0dcfc157fdba58763190903bd78b5a15ead54d7dd2da208f6fe569a67).
+# ---------------------------------------------------------------------------
+
+[[base]]
+id = "gpt-6.2"
+file = "gpt-6.2.txt"
+upstream_path = "packages/core/src/plugin/system-prompt/gpt-6.2.txt"
+bytes = 8054
+sha256 = "4009438ff05a3f5dccc52dc79c274b91ab271ebe2fabac689e3e8ea6b0764d4e"
+has_tool_guidance_token = true
+
+[[select]]
+substrings = ["gpt-6.2"]
+base = "gpt-6.2"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:19-34"
+
+[[select]]
+substrings = ["gpt-6-2"]
+base = "gpt-6.2"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:19-34"
+
+[[select]]
+substrings = ["gpt-62"]
+base = "gpt-6.2"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:19-34"
+
+[[select]]
+substrings = ["gpt-latest"]
+base = "gpt-6.2"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:19-34"
+
+[[select]]
+substrings = ["gpt-sol-latest"]
+base = "gpt-6.2"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:19-34"
+
+[[select]]
+substrings = ["gpt-astra-latest"]
+base = "gpt-6.2"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:19-34"
+
+[[select]]
+substrings = ["gpt-terra-latest"]
+base = "gpt-6.2"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:19-34"
+
+[[select]]
+# Upstream's one OpenAI predicate answers `id.includes("astra") ? ASTRA : GPT`
+# for any id containing "gpt", so the astra row is written first and
+# first-match-wins reproduces it. `substrings` must ALL be present.
+substrings = ["gpt", "astra"]
+base = "gpt-astra"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:16-20"
+
+[[select]]
+substrings = ["gpt"]
+base = "gpt"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:16-20"
+
+[[select]]
+substrings = ["claude"]
+base = "anthropic"
+mode = "append"
+source = "packages/core/src/plugin/optimize.ts:22-30"
+
+[[select]]
+substrings = ["kimi"]
+base = "kimi"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:51-53"
+
+[[select]]
+substrings = ["trinity"]
+base = "trinity"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:54-56"
+
+[[select]]
+substrings = ["muse"]
+base = "meta"
+mode = "override"
+source = "packages/core/src/plugin/optimize.ts:57-60"
+# `{{MODEL_NAME}}` is replaced with the model's display name, every
+# occurrence. One occurrence exists, on line 1 of meta.txt.
+[[select.substitute]]
+token = "{{MODEL_NAME}}"
+value = "model_name"
+occurrences = "all"
+
+# ---------------------------------------------------------------------------
+# The render rule: how `${OPENCODE_TOOL_GUIDANCE}` is expanded. The token is
+# replaced with the bullets whose `gate` tool is present in the launch's tool
+# list, joined by a single newline, in the order written here — upstream's
+# source order, independent of the tool list's order. Only the FIRST
+# occurrence of the token is replaced. A base whose text lacks the token is
+# left untouched, which is why kimi/meta/trinity models receive no tool
+# bullets at all.
+# Recorded from: packages/core/src/session/system-prompt.ts:9-27 (file sha256
+# 88f088f1bfa0b5e7dabfb6d3083c19d4203f7e12cc00a251494264a5b243f1dd).
+# ---------------------------------------------------------------------------
+
+[render]
+token = "${OPENCODE_TOOL_GUIDANCE}"
+replace = "first"
+join = "\n"
+source = "packages/core/src/session/system-prompt.ts:9-27"
+# The program emits its own base with trailing whitespace removed, and that
+# is one byte here: `system.txt` ends with a newline, the rendered text is
+# therefore 1,471 bytes, and the installed 2.2.7 binary's own first system
+# part is **1,470**. Recorded rather than left to the reader because it
+# moves the seam — a composition that kept the newline would put three of
+# them between the base's last sentence and the lane's first marker, where a
+# plain run has two, and the whole-request diff below would then see the
+# difference inside the insertion instead of beside it. Accepted values:
+# `none` (nothing is trimmed) and `end`.
+trim = "end"
+
+[[render.bullet]]
+gate = "shell"
+text = "- Prefer dedicated tools over shell commands; fall back to the shell when a tool cannot do what you need."
+
+[[render.bullet]]
+gate = "shell"
+text = "- Do not chain shell commands with separators like `echo \"====\";` or `printf '---'`; the output becomes noisy in a way that makes the user's side of the conversation worse."
+
+[[render.bullet]]
+gate = "write"
+text = "- Use the write tool to create files or completely replace their content. Prefer using the edit tool for targeted changes."
+
+[[render.bullet]]
+gate = "edit"
+text = "- Use the edit tool for targeted changes to existing text files. It replaces the exact text in `oldString` with `newString`, and the values must differ. By default, `oldString` must occur exactly once. If it occurs multiple times, include more surrounding context to make it unique or set `replaceAll` to true to replace every occurrence."
+
+# ---------------------------------------------------------------------------
+# How the lane is handed over, and the one transformation it undergoes.
+# ---------------------------------------------------------------------------
+
+[carrier]
+kind = "config-agent-system"
+# One per-launch configuration document in this environment variable;
+# `{file:}` is substituted inside `agents.<name>.system`
+# (packages/core/src/config.ts:293,
+# packages/core/src/config/variable.ts:47-76). Measured on 2.2.7 against a
+# fixture holding `"`, `\`, `{}` and `${}`: the inserted text arrives in the
+# parsed value verbatim, so an arbitrary lane cannot break the document.
+env = "OPENCODE_CONFIG_CONTENT"
+# **One flag, and it is not optional.** OpenCode's default mode serves
+# sessions from one long-lived background service that never sees this
+# launch's environment, so without `--standalone` the document either does
+# not arrive at all or arrives for every session that service goes on to
+# serve.
+#
+# `--agent` is deliberately NOT here. It is a flag of the `run` and `mini`
+# subcommands only: measured on 2.2.7, `opencode --standalone --agent <name>`
+# prints the usage and starts nothing, so a launcher that must also start
+# the interactive interface cannot select the agent with it. The document's
+# own `default_agent` key does select it, for the TUI and for every
+# subcommand alike — verified at the request level, where the agent's
+# `system` arrived as the first system part with no `--agent` anywhere.
+flags = ["--standalone"]
+# The document's own key names, so vibe's Rust spells no configuration key
+# of another program (packages/schema/src/config.ts for the two root keys,
+# packages/schema/src/config/agent.ts for the agent's).
+agents_key = "agents"
+system_key = "system"
+mode_key = "mode"
+default_agent_key = "default_agent"
+# The agent vibe declares and selects. A user agent of the same name is
+# shadowed for this launch alone, because the document is one configuration
+# layer in one process's environment and is never written to disk.
+agent_name = "vibe"
+agent_mode = "primary"
+# The gate tool names a launch through this carrier offers, which is what
+# the `[render]` bullets above are gated on. The agent is declared `primary`
+# with no tool restriction of its own — the agent schema has no `tools` key
+# at all (packages/schema/src/config/agent.ts) — so the launch receives
+# OpenCode's default tool set, and these three are in it. Recorded as data
+# because the render rule needs it and the launch cannot ask; proved by the
+# whole-request diff below rather than assumed.
+gate_tools = ["shell", "write", "edit"]
+lane_token = "{file:%LANE%}"
+# `{file:}` TRIMS leading and trailing whitespace from the inserted content
+# and keeps inner newlines (measured on a fixture). The lane's first byte is
+# `<`, so nothing is lost at the head; at the tail exactly one newline is
+# dropped — 202,348 of a 202,349-byte lane in the measurement below — and both
+# marker lines and their ids arrive intact.
+lane_transform = "trim"
+lane_bytes_dropped_at_tail = 1
+separator_between_base_and_lane = "\n\n"
+
+# ---------------------------------------------------------------------------
+# Fingerprints. These are DRIFT TRIPWIRES, not proof: they catch an upstream
+# edit to anything that could change the composition this directory describes.
+# They cannot catch a published bundle that disagrees with its own tag — only
+# the capture in `[verification]` can do that. The sync tool refuses to mark a
+# new version verified when any of these changed, and prints the diff for a
+# human to read.
+# ---------------------------------------------------------------------------
+
+[[fingerprint]]
+path = "packages/core/src/session/system-prompt.ts"
+sha256 = "01532f3e128241303602c7a3b1d5830b07e18daaf46bb71e5fb952c5a6cd7e53"
+decides = "the render rule: the token, the gate tool names, the bullet strings and their order"
+
+[[fingerprint]]
+path = "packages/core/src/plugin/optimize.ts"
+sha256 = "01532f3e128241303602c7a3b1d5830b07e18daaf46bb71e5fb952c5a6cd7e53"
+decides = "the selection table, each family's append/override mode, and the bail-out that leaves an agent's own `system` untouched"
+
+[[fingerprint]]
+path = "packages/core/src/session/model-request.ts"
+decides = "the two-part system array, and that an agent's `system` is used raw instead of rendered"
+
+[[fingerprint]]
+path = "packages/core/src/config/variable.ts"
+decides = "`{file:}` and `{env:}` substitution, including the trim this carrier depends on"
+
+[[fingerprint]]
+path = "packages/core/src/config.ts"
+decides = "where substitution is applied, including to OPENCODE_CONFIG_CONTENT"
+
+[[fingerprint]]
+path = "packages/core/src/session/context.ts"
+decides = "the order of the instruction sources inside the single joined part"
+
+[[fingerprint]]
+path = "packages/core/src/config/plugin/instruction.ts"
+decides = "the AGENTS.md walk and the global/project/configured ordering of config `instructions`"
+
+[[fingerprint]]
+path = "packages/core/src/instructions/index.ts"
+decides = "how the instruction sources are combined and joined"
+
+[[fingerprint]]
+path = "packages/core/src/instructions/builtins.ts"
+decides = "the date and the `<env>` block, and therefore where the per-day text sits"
+
+[[fingerprint]]
+path = "packages/core/src/instruction-discovery.ts"
+decides = "the `Instructions from: <path>` rendering"
+
+[[fingerprint]]
+path = "packages/core/src/plugin/identity.ts"
+decides = "the model-identity part spliced in at index 1"
+
+[[fingerprint]]
+path = "packages/core/src/plugin/internal.ts"
+decides = "plugin registration order, which is hook order"
+
+[[fingerprint]]
+path = "packages/core/src/plugin/hooks.ts"
+decides = "that the context hooks run sequentially"
+
+[[fingerprint]]
+path = "packages/core/src/tool/plugin/opencode.ts"
+decides = "the extra system part appended at the end"
+
+[[fingerprint]]
+path = "packages/core/src/tool/plugin/subagent.ts"
+decides = "how a child session is constructed, and therefore worker exclusion"
+
+[[fingerprint]]
+path = "packages/core/src/plugin/agent.ts"
+decides = "the built-in agents and which of them carry a `system` of their own"
+
+[[fingerprint]]
+path = "packages/core/src/agent.ts"
+decides = "agent default and selection logic"
+
+[[fingerprint]]
+path = "packages/core/src/config/plugin/agent.ts"
+decides = "how a configured or markdown agent's `system` is applied"
+
+[[fingerprint]]
+path = "packages/core/src/config/markdown.ts"
+decides = "the frontmatter split that makes a markdown body the agent's `system`"
+
+[[fingerprint]]
+path = "packages/schema/src/config/agent.ts"
+decides = "the agent key set, and that there is no additive instructions field"
+
+[[fingerprint]]
+path = "packages/schema/src/agent.ts"
+decides = "`Agent.Info.system` and its default"
+
+[[fingerprint]]
+path = "packages/schema/src/config.ts"
+decides = "the top-level `instructions` and `agents` keys"
+
+[[fingerprint]]
+path = "packages/core/src/v1/config/agent.ts"
+decides = "the legacy `prompt` key"
+
+[[fingerprint]]
+path = "packages/core/src/v1/config/migrate.ts"
+decides = "the legacy `prompt` → `system` migration"
+
+[[fingerprint]]
+path = "packages/core/src/session/runner/llm.ts"
+decides = "the primary call site of the transcript builder"
+
+[[fingerprint]]
+path = "packages/core/src/session/generate.ts"
+decides = "a second call site of the transcript builder"
+
+[[fingerprint]]
+path = "packages/core/src/session/compaction.ts"
+decides = "a third call site of the transcript builder"
+
+[[fingerprint]]
+path = "packages/core/src/session/history.ts"
+decides = "which instruction entries reach the runner as `initial`"
+
+[[fingerprint]]
+path = "packages/core/src/session/instruction-state.ts"
+decides = "the initial-versus-update split of instruction entries"
+
+[[fingerprint]]
+path = "packages/core/src/tool/plugin/read.ts"
+decides = "the nested AGENTS.md injected on read"
+
+[[fingerprint]]
+path = "packages/ai/src/schema/messages.ts"
+decides = "how a system part becomes wire content"
+
+[[fingerprint]]
+path = "packages/ai/src/protocols/shared.ts"
+decides = "the join used when parts become one message"
+
+[[fingerprint]]
+path = "packages/ai/src/protocols/openai-chat.ts"
+decides = "that an OpenAI-chat provider joins the parts into a single system message"
+
+[[fingerprint]]
+path = "packages/ai/src/protocols/anthropic-messages.ts"
+decides = "that an Anthropic provider sends each part as its own block"
+
+[[fingerprint]]
+path = "packages/core/src/aisdk.ts"
+decides = "the join an AI-SDK-bridged provider uses between parts"
+
+# ---------------------------------------------------------------------------
+# Verification. `verified` is earned by a WHOLE-REQUEST measurement against
+# the installed program, never by the digests above.
+# ---------------------------------------------------------------------------
+
+[verification]
+verified = true
+proof_id = "opencode-whole-request-6d0f4b5676bdb35a"
+proof_date = "2026-11-26"
+
+[[caveat]]
+id = "tag-versus-bundle"
+text = """
+Every digest above is of the file as it exists in the upstream git commit, not
+in the published artifact. OpenCode ships one compiled binary that inlines
+these .txt files through its bundler, so no digest here can attest that the
+program on disk carries the tag's bytes. The ONLY evidence for that is the
+capture in `[verification]`: the base reproduced from this data was
+byte-identical to what the installed 2.2.7 binary put in its own first system
+part. That is why `verified` is a measurement per version and not a checksum.
+"""
+
+[[caveat]]
+id = "plugins-can-add-parts"
+text = """
+This file describes the composition of an UNEXTENDED install. An OpenCode
+plugin can mutate the system array through the same `session.context` hook the
+built-in ones use, and no fingerprint of OpenCode's core will catch that. A
+launch in a project or home that loads such a plugin may therefore compose a
+prompt this record does not describe.
+"""

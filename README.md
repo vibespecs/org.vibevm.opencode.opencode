@@ -1,3 +1,7 @@
+## Candidate update (2.4.2)
+
+This source preserves the historical package files and version domain. The new CLI payload metadata and all twelve archives are verified. The 2.4.2 prompt-base set passed canonical offline whole-request capture conditions (0)–(v), proof opencode-whole-request-6d0f4b5676bdb35a dated 2026-11-26. The executed model branch was fake-1 (default generic base); model-specific branches are reviewed rules and hashed source data, not capture-tested. Live-model condition (vi) was not run. Historical instructions below describe their stated versions, not this candidate.
+
 # OpenCode application package
 
 This package installs [OpenCode](https://github.com/anomalyco/opencode) — the
